@@ -124,3 +124,94 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 module.exports = { s3, docClient }; // Export both S3 and DocumentClient
 
 ```
+
+---------------------------------------------------
+# PART 2 ADDING JWT 
+this part explains how we can add jwt authentification to our app. 
+
+## 1- INSTALL JWT library 
+- First, you need to add a JWT library to your project. For Node.js, you might use jsonwebtoken. Install it via npm:
+```bash 
+npm install jsonwebtoken
+``` 
+## 2- Set up JWT secret KEy 
+- add produce a key  via NODE CLI and this key to your env file
+```bash
+require('crypto').randomBytes(64).toString('hex')
+``` 
+
+## 3- create a JWT middleware file for Token verification 
+- we created authMiddleware.js file 
+
+``` bash 
+const jwt = require('jsonwebtoken');
+
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({
+      message: "Access denied. No token provided."
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(400).json({
+      message: "Invalid token."
+    });
+  }
+};
+
+module.exports = verifyToken;
+
+``` 
+## 4- User Authentication and Token Generation
+- Generate JWTs during user login and registration. Store the JWT in HTTP-only cookies:
+```bash 
+router.post('/signup', function(req, res) {
+  // Assume user data validation and password hashing are handled here
+  const token = jwt.sign(
+    { email: req.body.email, username: req.body.username },
+    process.env.TOKEN_SECRET,
+    { expiresIn: '1h' }
+  );
+
+  res.cookie('token', token, { httpOnly: true, secure: true });
+  res.status(200).json({
+    message: "User registered successfully",
+    username: req.body.username,
+    email: req.body.email
+  });
+});
+``` 
+## 5- Applying Middleware to Protected Routes
+Use the verifyToken middleware to protect routes that require authentication:
+```bash 
+const express = require('express');
+const router = express.Router();
+const verifyToken = require('../authMiddleware.js');
+
+router.use(verifyToken);
+
+router.get('/', function(req, res) {
+  res.render('index', { title: 'Protected Page' });
+});
+
+module.exports = router;
+``` 
+
+## 6- added logout 
+-Implement a logout by clearing the token stored in the cookies:
+```bash 
+router.get('/logout', function(req, res) {
+  res.clearCookie('token');
+  res.redirect('/login');
+});
+```
+
+
+

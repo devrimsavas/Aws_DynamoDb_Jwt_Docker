@@ -1,0 +1,28 @@
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <%- include('partials/header.ejs') %>
+  </head>
+  <body>
+    <%- include('partials/navbar.ejs') %>
+
+    
+    <div class="container-fluid mt-5 mb-5 p-4"  name="dynamo-main" id="dynamo-main">
+      <h1 style="text-align:center;"><%= title %></h1><br>  
+         
+      <h5> Create an database in your AWS account<strong> <a href="https://eu-north-1.console.aws.amazon.com/dynamodbv2/home?region=eu-north-1#services/DynamoDB"> CREATE a DynamoDB</a></strong> </h5>
+    </div>
+
+    <%- include('partials/databasetable.ejs') %>
+
+    
+    <div id="error-message"></div>
+
+
+
+
+  </body>
+</html>

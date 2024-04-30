@@ -1,0 +1,7 @@
+          
+AWS_REGION=""
+AWS_ACCESS_KEY_ID=""
+AWS_SECRET_ACCESS_KEY=""
+S3_BUCKET="my bucket name"
+
+//if you want to use a database add also its env path 

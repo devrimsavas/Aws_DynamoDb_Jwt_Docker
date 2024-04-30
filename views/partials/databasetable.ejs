@@ -1,0 +1,65 @@
+<div class="container-fluid mt-5" name="database-menu-holder" id="database-menu-holder">
+    <div class="row">
+
+
+        <!--Database entry form-->  
+        <div class="col-md-3 bordered rounded" name="database-form" id="database-form">
+            <p> <strong> Add new entry</strong></p><hr>
+            <div class="form-group" id="database-enry-form-group" name="database-enry-form-group">
+                
+                <form class="form border" action="/dynamodb/newentry" method="POST" name="database-entry" id="database-entry">
+                <label for="firstname">First Name</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="Enter name">
+
+                <label for="lastname">Last Name</label>
+                <input type="text" class="form-control" id="surname" name="surname" placeholder="Enter last name">
+
+                <label for="age">Age</label>
+                <input type="number" class="form-control" id="age" name="age" placeholder="Enter age">
+
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Enter email">
+                <!--add person button-->
+                <button type="submit" class="btn btn-primary mt-3" id="add-button" name="add-button">ADD</button>
+                <!--delete person button-->
+                <button type="submit" class="btn btn-danger mt-3" id="delete-button" name="delete-button">DELETE A USER</button>
+                <!--update person button-->
+                <button type="submit" class="btn btn-warning mt-3" id="update-button" name="update-button">UPDATE A USER</button>
+                </form>
+            </div> 
+        
+        </div> <!--Database entry form ENDS-->
+
+        <!--Database table--> 
+        <div class="col-md-8 border rounded" name="database-table" id="database-table-menu">
+            <div class="container-fluid d-flex justify-content-between mb-1">
+                
+                <!--form to get all entries-->
+                <form class="form" action="/dynamodb/getall" method="GET" name="get-all-entries" id="get-all-entries">
+                    <button type="button" class="btn btn-secondary mt-1" id="get-all-entries-button" name="get-all-entries-button" ><small> Show All Users</small></button>
+                </form>
+                
+            </div>
+            
+            
+            <div class="responsive-table">
+                <table class="table" name="database-table" id="database-table">
+                    <thead id="table-header">
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Last Name</th>
+                            <th scope="col">Age</th>
+                            <th scope="col">Email </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!--database comes here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+<!--eND database- menu holder-->       
+</div>

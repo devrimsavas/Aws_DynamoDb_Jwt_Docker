@@ -1,218 +1,90 @@
+# AWS DynamoDB + JWT + Docker Tutorial Project
 
+A Node.js/Express application demonstrating AWS DynamoDB integration, JWT-based authentication with cookie storage, and Docker containerization.
 
-# AWS DYNAMO DB TUTORIAL  WITH JWT 
-- We create two tables in same database: 
-    - table userTable for user operation 
-    - table UserCredentials for login and sign-up 
-    - user can access userTable operations after log-in 
-    - implantation of JWT is given second part of this tutorial. 
+## 🚀 Features
 
-# 1- Create a Dynamo DB in AWS 
+- **Two DynamoDB tables**
+  - `UserCredentials` — used for login and sign-up (keyed by email)
+  - `UserTable` (user info) — accessible only after authentication
+- **JWT Authentication**
+  - Passwords hashed with `bcrypt`
+  - JWT issued on login/signup and stored in an HTTP-only cookie
+  - Custom `authMiddleware.js` verifies the token and protects routes
+- **CRUD on DynamoDB** — authenticated users can create and manage entries via the `/dynamodb` routes
+- **Dockerized** — includes a `Dockerfile` for containerized deployment
+- **EJS views** with Bootstrap and SweetAlert2 for a simple login/signup/dashboard UI
 
-you'll need to create a table in AWS DynamoDB. Here’s a high-level overview of the steps you'll need to follow to get started with DynamoDB:
+## 🛠 Tech Stack
 
-- 1-  Sign In to AWS Management Console: Log into the AWS Management Console with your AWS account.
-- 2-  Navigate to DynamoDB: In the AWS Management Console, find and select DynamoDB under the database services category.
-        https://eu-north-1.console.aws.amazon.com/dynamodbv2/home?region=eu-north-1#service 
-- 3-  Create a Table:
-    - - Click the “Create table” button.
-    - - Enter a name for your table. This is how your application will refer to it.
-    - - Define a primary key for your table. The primary key uniquely identifies each item in the table, so it's important to choose the key that suits your data. You can choose a simple primary key (partition key) or a composite primary key (partition key and sort key).
+- Node.js, Express, EJS
+- AWS SDK (`aws-sdk`) — DynamoDB DocumentClient, S3 client configured
+- JWT (`jsonwebtoken`) + `bcrypt` for password hashing
+- Docker (Node 16 base image)
+- Bootstrap, jQuery, SweetAlert2
 
-    - - Configure additional settings as necessary, such as secondary indexes (which allow you to query the data in different ways), auto scaling, encryption, and more.
-
-- 4 Table Settings:
-   - -  You can customize read/write capacity modes, manage secondary indexes, set up stream settings if you want to capture changes to your table, and configure backup and restore settings.
-
-   - -  DynamoDB offers two capacity modes: On-demand and Provisioned. On-demand automatically adjusts capacity to maintain performance as request volumes change, while Provisioned requires you to specify the amount of read and write throughput that you expect your application to require.
-
- 
-- 5 Review and Create: Review all settings and configurations, then click “Create” to establish your DynamoDB table.
-Access and Manage Data: Once your table is created, you can start accessing and managing data through the AWS Management Console, or programmatically via the AWS SDKs in your application.
-
-
- When your table is ready, you can integrate it into your application using the AWS SDK. This will allow you to perform operations like creating, reading, updating, and deleting items in your DynamoDB table directly from your application 
-
-
- # 2- Install and Dynamo CRUD operation 
--  Install the dotenv and @cyclic.sh/dynamodb packages with the commands if you use cyclic:
- ``` bash 
-
- npm i dotenv
- npm i '@cyclic.sh/dynamodb'
- ``` 
-- Install AWS if you use Render 
-```bash 
-npm install aws-sdk
-```
- * Important note: Since cyclic is still down , we will use RENDER , so we do not need to install 
- ```bash 
- npm i '@cyclic.sh/dynamodb' 
- ``` 
- for this project: 
- - however the reason why we need it ?
-- - The package @cyclic.sh/dynamodb  is typically used when working with DynamoDB, but it's specifically tailored for integration with Cyclic, a serverless app hosting platform. This package is a wrapper around AWS DynamoDB operations, providing simplified methods to perform CRUD (Create, Read, Update, Delete) operations on your DynamoDB tables. It likely includes additional functionalities or configurations that are optimized for use within the Cyclic platform
-
-- WHY use ` @cyclic.sh/dynamodb?
-- - Simplified API: The wrapper provides a more straightforward and possibly more intuitive API for interacting with DynamoDB. This can make your code cleaner and easier to maintain.
-- - Integration with Cyclic: If you are hosting your application on Cyclic, using their specific package might provide better integration with the platform's other features and optimizations.
-- - Additional Features: Such packages often include enhancements like easier connection setups, handling of retries, or other utility features that are not directly provided by the standard AWS SDK.
-
-
-### Should we use @cyclic.sh/dynamodb
-- If you are using Cyclic: It makes sense to use this package as it likely offers optimizations and enhancements tailored to the Cyclic environment.
-- If you are not using Cyclic: You might be better off using the official AWS SDK (aws-sdk) for Node.js. This ensures you have full control over all features provided by AWS without any additional abstraction or dependency on third-party packages unless you specifically require the features they offer.
-
-- For projects not hosted on Cyclic or if you want the most direct control over AWS services, sticking with the official aws-sdk is generally advisable. This approach ensures compatibility with AWS updates and direct support from AWS documentation and community resources.
-
-
-
-## Local and Deployement Security 
-- Locally: If you're developing locally, you can also use the AWS CLI to configure your credentials securely. Run aws configure and input your credentials, which will be stored in ~/.aws/credentials. Your application can then use the default credential provider chain to access these securely.
-- n Production: Use secrets management tools provided by your hosting service or third-party tools like HashiCorp Vault to manage and inject credentials into your application securely.
-
-## Configure AWS CLI 
-```bash 
-aws configure
-```
-- This command will prompt you to enter your AWS Access Key ID, Secret Access Key, default region, and output format. It stores the credentials in a file that the AWS SDK can automatically use, which is safer than storing them in plain text in your environment.
-
-
-# CREATE a Dynamo DB table 
-
-- BEFORE you create table "be sure your policy has 
-```bash 
-AmazonDynamoDBFullAccess
-``` 
-
-- 1 Access DynamoDB in AWS Console:
-    - Go to the AWS Management Console.
-    - Open the DynamoDB service page.
-- 2 Create a New Table 
-    - Click on the “Create table” button.
-    - Table name: Give your table a name that easily identifies its purpose, like UserInfo.
-    - Primary key: Decide on the primary key for your table. For user data, typically, email could be a good choice as it is unique for each user. You could set email as the partition key.
-
-- 3 Define Attributes 
-    - While DynamoDB is schema-less for the attributes (other than the primary key), meaning you can store any additional data as needed, you must define the primary key. For your application, define the primary key as mentioned, and you can save name, surname, and age dynamically.
-
-- 4 Set Throughput Settings:
-    -You can choose between Provisioned and On-demand capacity modes. On-demand is easier to manage as it scales automatically and you pay per request, which might be preferable for a new application without     predictable traffic.
-- 5  Additional Settings (Optional):
-    - Secondary Indexes: If you think you'll need to query your table by fields other than the primary key (e.g., surname), consider setting up secondary indexes.
-    - Auto Scaling: If you choose provisioned capacity, consider enabling auto-scaling to adjust capacity based on actual usage.
-    - Encryption, Tags, and Backups: Set up these options based on your security and operational requirements.
-- 6 Create the Table:
-Review all the settings, then click “Create”. It will take a few moments for AWS to provision the table and make it available for use.
-
-
-# CONFIG FILE 
-- we need initialize AWS configuration file including Dynamo DB 
-
-```bash 
-
-const AWS = require('aws-sdk');
-
-AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-});
-
-const docClient = new AWS.DynamoDB.DocumentClient();
-
-module.exports = { s3, docClient }; // Export both S3 and DocumentClient
+## 📂 Project Structure
 
 ```
+Aws_DynamoDb_Jwt_Docker/
+├── routes/
+│   ├── auth.js          # Login / signup against UserCredentials table
+│   ├── dynamodb.js       # Protected CRUD routes for UserTable (JWT-guarded)
+│   ├── index.js
+│   └── users.js
+├── views/
+│   ├── login.ejs, signup.ejs
+│   ├── dynamodb.ejs      # Dashboard for authenticated DynamoDB operations
+│   └── index.ejs
+├── aws-config.js         # AWS SDK configuration (DynamoDB + S3 clients)
+├── authMiddleware.js     # JWT verification middleware
+├── setupTable.js         # Reference script for creating a DynamoDB table via SDK
+├── Dockerfile
+└── ENV_EXAMPLE.txt
+```
 
----------------------------------------------------
-# PART 2 ADDING JWT 
-this part explains how we can add jwt authentification to our app. 
+## 🔑 Authentication Flow
 
-## 1- INSTALL JWT library 
-- First, you need to add a JWT library to your project. For Node.js, you might use jsonwebtoken. Install it via npm:
-```bash 
-npm install jsonwebtoken
-``` 
-## 2- Set up JWT secret KEy 
-- add produce a key  via NODE CLI and this key to your env file
+1. User signs up or logs in via `/auth/login` — credentials checked against the `UserCredentials` DynamoDB table, password verified with `bcrypt`
+2. On success, a JWT is generated and stored in an HTTP-only cookie
+3. Protected routes under `/dynamodb` use `authMiddleware.js` to verify the token from the cookie (or `Authorization` header) before allowing access
+4. Logout clears the cookie
+
+## ▶️ Getting Started
+
+### Prerequisites
+- Node.js
+- An AWS account with a DynamoDB table set up (see `document/DynamoDBPermission.md` for the required IAM policy)
+- Docker (optional, for containerized run)
+
+### Local Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/devrimsavas/Aws_DynamoDb_Jwt_Docker.git
+   cd Aws_DynamoDb_Jwt_Docker
+   ```
+2. **Configure environment variables** — copy `ENV_EXAMPLE.txt` to `.env`:
+   ```env
+   AWS_REGION=eu-north-1
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   TOKEN_SECRET=your_jwt_secret
+   ```
+3. **Create the DynamoDB tables** in the AWS Console (or adapt `setupTable.js`), with `email` as the partition key
+4. **Install dependencies and run**
+   ```bash
+   npm install
+   npm start
+   ```
+
+### Run with Docker
+
 ```bash
-require('crypto').randomBytes(64).toString('hex')
-``` 
-
-## 3- create a JWT middleware file for Token verification 
-- we created authMiddleware.js file 
-
-``` bash 
-const jwt = require('jsonwebtoken');
-
-const verifyToken = (req, res, next) => {
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({
-      message: "Access denied. No token provided."
-    });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(400).json({
-      message: "Invalid token."
-    });
-  }
-};
-
-module.exports = verifyToken;
-
-``` 
-## 4- User Authentication and Token Generation
-- Generate JWTs during user login and registration. Store the JWT in HTTP-only cookies:
-```bash 
-router.post('/signup', function(req, res) {
-  // Assume user data validation and password hashing are handled here
-  const token = jwt.sign(
-    { email: req.body.email, username: req.body.username },
-    process.env.TOKEN_SECRET,
-    { expiresIn: '1h' }
-  );
-
-  res.cookie('token', token, { httpOnly: true, secure: true });
-  res.status(200).json({
-    message: "User registered successfully",
-    username: req.body.username,
-    email: req.body.email
-  });
-});
-``` 
-## 5- Applying Middleware to Protected Routes
-Use the verifyToken middleware to protect routes that require authentication:
-```bash 
-const express = require('express');
-const router = express.Router();
-const verifyToken = require('../authMiddleware.js');
-
-router.use(verifyToken);
-
-router.get('/', function(req, res) {
-  res.render('index', { title: 'Protected Page' });
-});
-
-module.exports = router;
-``` 
-
-## 6- added logout 
--Implement a logout by clearing the token stored in the cookies:
-```bash 
-router.get('/logout', function(req, res) {
-  res.clearCookie('token');
-  res.redirect('/login');
-});
+docker build -t aws-dynamodb-jwt .
+docker run -p 3000:3000 --env-file .env aws-dynamodb-jwt
 ```
 
+## 📝 Notes
 
-
-- end 
+This is a learning project built to practice integrating a NoSQL AWS database (DynamoDB) with a custom JWT authentication layer, and packaging the result as a Docker container. AWS credentials should always be managed via environment variables or a secrets manager — never committed to source control.
